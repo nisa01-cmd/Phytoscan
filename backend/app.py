@@ -1,16 +1,19 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 import tensorflow as tf
 import numpy as np
 import cv2
 from PIL import Image
-import io
-import json
-import os
+import io, json, os
 from fastapi.middleware.cors import CORSMiddleware
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+import time
 
 app = FastAPI()
 
-# Allow React frontend
+# -------------------------------
+# CORS
+# -------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,82 +25,112 @@ app.add_middleware(
 # -------------------------------
 # Paths
 # -------------------------------
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "..", "models")
 
-model_path = os.path.join(MODEL_DIR, "disease_model.h5")
-class_path = os.path.join(MODEL_DIR, "class_names.json")
+app.mount("/models", StaticFiles(directory=MODEL_DIR), name="models")
 
 # -------------------------------
-# Load model
+# Load Model
 # -------------------------------
+model = tf.keras.models.load_model(os.path.join(MODEL_DIR, "disease_model.h5"))
 
-model = tf.keras.models.load_model(model_path)
-
-# -------------------------------
-# Load class names
-# -------------------------------
-
-with open(class_path) as f:
+with open(os.path.join(MODEL_DIR, "class_names.json")) as f:
     class_indices = json.load(f)
 
 class_names = list(class_indices.keys())
 
-IMG_SIZE = 224
-
 # -------------------------------
-# Image preprocessing
+# Preprocessing
 # -------------------------------
-
 def preprocess(image):
-
-    image = cv2.resize(image, (IMG_SIZE, IMG_SIZE))
-    image = image / 255.0
+    image = cv2.resize(image, (224,224))
+    image = preprocess_input(image)
     image = np.expand_dims(image, axis=0)
-
     return image
 
+# -------------------------------
+# Grad-CAM Function
+# -------------------------------
+def get_gradcam_heatmap(img_array, model, last_conv_layer_name="Conv_1"):
+
+    grad_model = tf.keras.models.Model(
+        [model.inputs],
+        [model.get_layer(last_conv_layer_name).output, model.output]
+    )
+
+    with tf.GradientTape() as tape:
+        conv_outputs, predictions = grad_model(img_array)
+        class_idx = tf.argmax(predictions[0])
+        loss = predictions[:, class_idx]
+
+    grads = tape.gradient(loss, conv_outputs)
+
+    pooled_grads = tf.reduce_mean(grads, axis=(0,1,2))
+
+    conv_outputs = conv_outputs[0]
+    heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+
+    heatmap = tf.maximum(heatmap, 0) / (tf.reduce_max(heatmap) + 1e-8)
+
+    return heatmap.numpy()
 
 # -------------------------------
-# API routes
+# Predict API
 # -------------------------------
-
-@app.get("/")
-def home():
-    return {"message": "PhytoScan API running"}
-
-
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
 
     try:
-
         contents = await file.read()
 
-        image = Image.open(io.BytesIO(contents)).convert("RGB")
-        image = np.array(image)
+        # Original image (for Grad-CAM)
+        original_image = Image.open(io.BytesIO(contents)).convert("RGB")
+        original_np = np.array(original_image)
 
-        image = preprocess(image)
+        # Preprocess
+        image = preprocess(original_np)
 
-        prediction = model.predict(image, verbose=0)
+        # Prediction
+        pred = model.predict(image)[0]
 
-        class_index = int(np.argmax(prediction))
+        # -------------------------------
+        # Top-3 Predictions
+        # -------------------------------
+        top_indices = pred.argsort()[-3:][::-1]
 
-        predicted_class = class_names[class_index]
+        top_predictions = []
+        for i in top_indices:
+            top_predictions.append({
+                "class": class_names[i].replace("_", " "),
+                "confidence": float(pred[i])
+            })
 
-        # cleaner label for UI
-        predicted_class = predicted_class.replace("__", " ")
+        # -------------------------------
+        # Grad-CAM
+        # -------------------------------
+        heatmap = get_gradcam_heatmap(image, model)
 
-        confidence = float(np.max(prediction))
+        heatmap = cv2.resize(heatmap, (224,224))
+        heatmap = np.uint8(255 * heatmap)
+        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
 
+        original_resized = cv2.resize(original_np, (224,224))
+        superimposed = heatmap * 0.4 + original_resized
+
+        gradcam_path = os.path.join(MODEL_DIR, "gradcam.jpg")
+        cv2.imwrite(gradcam_path, superimposed)
+
+        # -------------------------------
+        # Final Output
+        # -------------------------------
         return {
-            "prediction": predicted_class,
-            "confidence": confidence
+            "prediction": top_predictions[0]["class"],
+            "confidence": top_predictions[0]["confidence"],
+            "top_predictions": top_predictions,
+            "gradcam_url": f"http://127.0.0.1:8000/models/gradcam.jpg?t={int(time.time())}"
         }
 
     except Exception as e:
-
-        return {
-            "error": str(e)
-        }
+        return {"error": str(e)}
