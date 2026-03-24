@@ -1,3 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 93%;
+
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 93%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 93%;
+
+    --primary: 142 50% 45%;
+    --primary-foreground: 0 0% 7%;
+
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 93%;
+
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 28 60% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 142 50% 45%;
+
+    --radius: 0.75rem;
+
+    --crop-leaf: 142 50% 45%;
+    --crop-soil: 28 40% 38%;
+    --crop-sun: 42 90% 58%;
+    --crop-warning: 38 92% 50%;
+    --crop-danger: 0 72% 50%;
+    --crop-healthy: 142 60% 50%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 142 50% 45%;
+    --sidebar-primary-foreground: 0 0% 7%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 142 50% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply tracking-tight text-wrap-balance;
+  }
+}
+
+@layer utilities {
+  .text-wrap-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .upload-zone {
+    @apply border-2 border-dashed border-primary/30 rounded-2xl bg-primary/5 
+           hover:border-primary/50 hover:bg-primary/10 transition-all duration-300
+           cursor-pointer flex flex-col items-center justify-center gap-4 p-12;
+  }
+
+  .upload-zone:active {
+    transform: scale(0.98);
+  }
+
+  .disease-severity-low {
+    @apply bg-crop-healthy/10 text-crop-healthy border-crop-healthy/20;
+  }
+
+  .disease-severity-medium {
+    @apply bg-crop-warning/10 text-crop-warning border-crop-warning/20;
+  }
+
+  .disease-severity-high {
+    @apply bg-crop-danger/10 text-crop-danger border-crop-danger/20;
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .stagger-1 { animation-delay: 80ms; }
+  .stagger-2 { animation-delay: 160ms; }
+  .stagger-3 { animation-delay: 240ms; }
+  .stagger-4 { animation-delay: 320ms; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}

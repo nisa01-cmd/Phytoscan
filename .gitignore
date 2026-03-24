@@ -1,86 +1,72 @@
-# -------------------------
-# Python cache files
-# -------------------------
+# -------------------------------
+# Python / Backend
+# -------------------------------
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
+*.pyd
+*.so
 
-# -------------------------
-# Virtual Environment
-# -------------------------
+# Virtual environments
 venv/
 env/
-ENV/
+model_env/
+.venv/
 
-# -------------------------
-# Dataset (large files)
-# -------------------------
-dataset/
-data/
+# Python env config
+pyvenv.cfg
 
-# -------------------------
-# Trained Models
-# -------------------------
-models/
-*.h5
-*.keras
-*.pt
-*.pth
-
-# -------------------------
 # Logs
-# -------------------------
 *.log
 
-# -------------------------
-# Jupyter Notebook checkpoints
-# -------------------------
-.ipynb_checkpoints/
-
-# -------------------------
-# Environment variables
-# -------------------------
-.env
-
-# -------------------------
 # OS files
-# -------------------------
 .DS_Store
 Thumbs.db
 
-# -------------------------
-# IDE settings
-# -------------------------
-.vscode/
-.idea/
+# -------------------------------
+# ML / Models / Dataset
+# -------------------------------
+models/*.h5
+models/*.pt
+models/*.pkl
+models/*.joblib
 
-# -------------------------
-# Temporary files
-# -------------------------
-*.tmp
-*.swp
+# Images / outputs
+models/*.png
+models/*.jpg
+
+# Dataset (VERY IMPORTANT)
+dataset/
+
+# -------------------------------
+# Node / Frontend
+# -------------------------------
+node_modules/
+dist/
+build/
+
+# Vite
+.vite/
 
 # Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# -------------------------------
+# VS Code / IDE
+# -------------------------------
+.vscode/
+.idea/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# -------------------------------
+# Environment variables
+# -------------------------------
+.env
+.env.*
+
+# -------------------------------
+# Misc
+# -------------------------------
+*.sqlite3
+*.db
