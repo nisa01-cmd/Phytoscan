@@ -95,6 +95,7 @@ const Index = () => {
     "tomato spider mites two spotted spider mite":
       "Tomato_Spider_mites_Two_spotted_spider_mite",
     "tomato target spot": "Tomato_Target_Spot",
+    "tomato tomato mosaic virus": "Tomato_Tomato_mosaic_virus",
     "tomato mosaic virus": "Tomato_Tomato_mosaic_virus",
     "tomato yellow leaf curl virus":
       "Tomato_Tomato_YellowLeaf_Curl_Virus",
@@ -125,11 +126,14 @@ const Index = () => {
     // ✅ FIXED: correct data mapping (NO status dependency)
       const key = normalizeKey(data.prediction); // basic mapping
 
-      const info = diseaseInfo[key] || {
-        treatment: ["No treatment data available"],
-        prevention: ["No prevention data available"],
-      };
-
+      const info =
+        diseaseInfo[key] ||
+        diseaseInfo[key.toLowerCase()] ||
+        {
+          treatment: ["No treatment data available"],
+          prevention: ["No prevention data available"],
+          };
+          
       setResult({
         disease: data.prediction,
         confidence: Number((data.confidence * 100).toFixed(2)),
