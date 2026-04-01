@@ -133,7 +133,7 @@ const Index = () => {
           treatment: ["No treatment data available"],
           prevention: ["No prevention data available"],
           };
-          
+
       setResult({
         disease: data.prediction,
         confidence: Number((data.confidence * 100).toFixed(2)),
@@ -213,7 +213,7 @@ const Index = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 fade-in-up">
           <StatsCard icon={ScanLine} label="Scans Today" value={stats.scansToday.toString()} />
           <StatsCard icon={Bug} label="Diseases Found" value={stats.diseasesFound.toString()} />
-          <StatsCard icon={TrendingUp} label="Accuracy Rate" value={`${stats.accuracy}%`} />
+          <StatsCard icon={TrendingUp} label="Confidence" value={`${stats.accuracy}%`} />
           <StatsCard icon={History} label="Total Scans" value={stats.totalScans.toString()} />
         </div>
       </section>
