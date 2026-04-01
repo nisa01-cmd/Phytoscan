@@ -12,6 +12,7 @@ from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 import time
 import cv2
 import os
+from tensorflow import keras
 
 MODEL_PATH = os.path.join(
     os.path.dirname(__file__),
@@ -216,4 +217,4 @@ async def predict(file: UploadFile = File(...)):
 import uvicorn
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=10000)
+    uvicorn.run("backend.app:app", host="0.0.0.0", port=10000)

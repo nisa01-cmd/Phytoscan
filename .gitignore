@@ -26,7 +26,7 @@ Thumbs.db
 # -------------------------------
 # ML / Models / Dataset
 # -------------------------------
-models/*.h5
+
 models/*.pt
 models/*.pkl
 models/*.joblib
