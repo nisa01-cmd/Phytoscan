@@ -18,7 +18,7 @@ MODEL_PATH = os.path.join(
     os.path.dirname(__file__),
     "..",
     "models",
-    "disease_model.h5"
+    "model"
 )
 app = FastAPI()
 
