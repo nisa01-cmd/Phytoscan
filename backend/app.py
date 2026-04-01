@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile 
 from fastapi.staticfiles import StaticFiles
 # import tensorflow as tf
+from matplotlib import image
 import numpy as np
 # import cv2
 import tensorflow as tf
@@ -194,7 +195,9 @@ async def predict(file: UploadFile = File(...)):
 
         image = preprocess(image)
 
-        pred = model.predict(image)[0]
+        infer = model.signatures["serving_default"]
+        outputs = infer(tf.constant(image))
+        pred = list(outputs.values())[0].numpy()[0]
 
         top_indices = pred.argsort()[-3:][::-1]
 
