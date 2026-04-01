@@ -114,7 +114,7 @@ const Index = () => {
   formData.append("file", file);
 
   try {
-    const res = await fetch("http://127.0.0.1:8000/predict", {
+    const res = await fetch("https://phytoscan-1.onrender.com", {
       method: "POST",
       body: formData,
     });
