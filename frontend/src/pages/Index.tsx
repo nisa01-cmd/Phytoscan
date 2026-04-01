@@ -1,40 +1,61 @@
-import { useState, useCallback } from "react";
-import { Leaf, ScanLine, History, TrendingUp, Bug, Sun, BarChart3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { ScanLine, History, TrendingUp, Bug, Sun, BarChart3 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 import PredictionResult, { type PredictionData } from "@/components/PredictionResult";
 import DiseaseCard from "@/components/DiseaseCard";
 import StatsCard from "@/components/StatsCard";
 import heroCrop from "@/assets/hero-crop.jpg";
-
-const MOCK_RESULT: PredictionData = {
-  disease: "Late Blight (Phytophthora infestans)",
-  confidence: 94.7,
-  severity: "high",
-  crop: "Tomato",
-  description:
-    "Late blight is a devastating disease caused by the oomycete Phytophthora infestans. It produces dark, water-soaked lesions on leaves, stems, and fruit. The pathogen thrives in cool, wet conditions and can destroy an entire crop within days if untreated.",
-  treatments: [
-    "Apply copper-based fungicide immediately",
-    "Remove and destroy all infected plant material",
-    "Increase plant spacing for air circulation",
-    "Apply chlorothalonil as a preventive spray",
-  ],
-  prevention: [
-    "Use certified disease-free seeds and transplants",
-    "Rotate crops on a 3-year cycle",
-    "Avoid overhead irrigation in the evening",
-    "Monitor weather forecasts for blight-favorable conditions",
-  ],
-};
+import { diseaseInfo } from "@/data/diseaseInfo";
 
 const COMMON_DISEASES = [
-  { name: "Late Blight", crop: "Tomato / Potato", severity: "high" as const, icon: "🍅" },
-  { name: "Powdery Mildew", crop: "Wheat / Barley", severity: "medium" as const, icon: "🌾" },
-  { name: "Leaf Rust", crop: "Wheat", severity: "medium" as const, icon: "🍂" },
-  { name: "Bacterial Wilt", crop: "Tomato / Pepper", severity: "high" as const, icon: "🫑" },
-  { name: "Rice Blast", crop: "Rice", severity: "high" as const, icon: "🌾" },
-  { name: "Downy Mildew", crop: "Grape / Cucumber", severity: "low" as const, icon: "🍇" },
+  {
+    name: "Late Blight",
+    crop: "Tomato / Potato",
+    severity: "high" as const,
+    icon: "🍅",
+    cause: "Fungal infection",
+    treatment: "Apply fungicide, remove infected leaves",
+  },
+  {
+    name: "Powdery Mildew",
+    crop: "Wheat / Barley",
+    severity: "medium" as const,
+    icon: "🌾",
+    cause: "Fungal infection",
+    treatment: "Use sulfur-based fungicide",
+  },
+  {
+    name: "Leaf Rust",
+    crop: "Wheat",
+    severity: "medium" as const,
+    icon: "🍂",
+    cause: "Fungal infection",
+    treatment: "Apply rust-resistant fungicide",
+  },
+  {
+    name: "Bacterial Wilt",
+    crop: "Tomato / Pepper",
+    severity: "high" as const,
+    icon: "🫑",
+    cause: "Bacterial infection",
+    treatment: "Remove infected plants, disinfect soil",
+  },
+  {
+    name: "Rice Blast",
+    crop: "Rice",
+    severity: "high" as const,
+    icon: "🌾",
+    cause: "Fungal infection",
+    treatment: "Use systemic fungicide",
+  },
+  {
+    name: "Downy Mildew",
+    crop: "Grape / Cucumber",
+    severity: "low" as const,
+    icon: "🍇",
+    cause: "Oomycete pathogen",
+    treatment: "Improve airflow, apply fungicide",
+  },
 ];
 
 // same imports...
@@ -42,8 +63,47 @@ const COMMON_DISEASES = [
 const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<PredictionData | null>(null);
-
   
+  const formatKey = (name: string) => {
+  return name.replace(/ /g, "_").replace(/__/g, "__");
+};
+
+  // ✅ ADD THIS
+  const [stats, setStats] = useState({
+    scansToday: 0,
+    diseasesFound: 0,
+    accuracy: 0,
+    totalScans: 0,
+  });
+  
+  const normalizeKey = (name: string) => {
+  const clean = name.toLowerCase().replace(/\s+/g, " ").trim();
+
+  const map: any = {
+    "pepper bell healthy": "Pepper_bell__healthy",
+    "pepper bell bacterial spot": "Pepper_bell__Bacterial_spot",
+
+    "potato early blight": "Potato_Early_blight",
+    "potato late blight": "Potato_Late_blight",
+    "potato healthy": "Potato_healthy",
+
+    "tomato early blight": "Tomato_Early_blight",
+    "tomato late blight": "Tomato_Late_blight",
+    "tomato bacterial spot": "Tomato_Bacterial_spot",
+    "tomato leaf mold": "Tomato_Leaf_Mold",
+    "tomato septoria leaf spot": "Tomato_Septoria_leaf_spot",
+    "tomato spider mites two spotted spider mite":
+      "Tomato_Spider_mites_Two_spotted_spider_mite",
+    "tomato target spot": "Tomato_Target_Spot",
+    "tomato mosaic virus": "Tomato_Tomato_mosaic_virus",
+    "tomato yellow leaf curl virus":
+      "Tomato_Tomato_YellowLeaf_Curl_Virus",
+    "tomato healthy": "Tomato_healthy",
+  };
+
+  return map[clean] || name.replace(/ /g, "_");
+};
+
     const handleImageSelect = async (file: File) => {
   console.log("API CALL START");
 
@@ -62,22 +122,43 @@ const Index = () => {
     const data = await res.json();
     console.log("API RESPONSE:", data);
 
-    setResult({
-      disease: data.prediction,
-      confidence: 95,
-      severity: "low",
-      crop: "Leaf",
-      description: "Detected using AI model",
-      treatments: ["Use proper fertilizer"],
-      prevention: ["Maintain plant hygiene"],
-    });
+    // ✅ FIXED: correct data mapping (NO status dependency)
+      const key = normalizeKey(data.prediction); // basic mapping
 
-  } catch (err) {
-    console.error("ERROR:", err);
-  }
+      const info = diseaseInfo[key] || {
+        treatment: ["No treatment data available"],
+        prevention: ["No prevention data available"],
+      };
 
-  setIsAnalyzing(false);
-};
+      setResult({
+        disease: data.prediction,
+        confidence: Number((data.confidence * 100).toFixed(2)),
+        severity: "medium",
+        crop: "Leaf",
+        description: "Detected using AI model",
+
+        // ✅ dynamic values
+        treatments: info.treatment,
+        prevention: info.prevention,
+
+        top_predictions: data.top_predictions,
+      });
+
+      // ✅ FIXED: stats logic (no status)
+      setStats(prev => ({
+        scansToday: prev.scansToday + 1,
+        totalScans: prev.totalScans + 1,
+        diseasesFound: prev.diseasesFound + 1,
+        accuracy: Number((data.confidence * 100).toFixed(1)),
+      }));
+
+    } catch (err) {
+      console.error("ERROR:", err);
+    }
+
+    setIsAnalyzing(false);
+  };
+
 
   return (
     <div className="min-h-screen">
@@ -92,13 +173,12 @@ const Index = () => {
           </div>
 
           <div className="flex justify-between items-center">
-            <nav className="flex items-center gap-10 text-base">
-              <span className="cursor-pointer hover:text-white">Dashboard</span>
-              <span className="cursor-pointer hover:text-white">History</span>
-              <span className="cursor-pointer hover:text-white">Library</span>
-            </nav>
+            <nav />
 
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+            <button
+              onClick={() => window.scrollTo({ top: 400, behavior: "smooth" })}
+              className="bg-green-600 hover:bg-green-700 hover:scale-105 transition-all text-white px-4 py-2 rounded-lg"
+            >
               New Scan
             </button>
           </div>
@@ -127,10 +207,10 @@ const Index = () => {
       {/* Stats Row */}
       <section className="container px-4 -mt-1 pt-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 fade-in-up">
-          <StatsCard icon={ScanLine} label="Scans Today" value="127" trend="+12%" />
-          <StatsCard icon={Bug} label="Diseases Found" value="38" />
-          <StatsCard icon={TrendingUp} label="Accuracy Rate" value="94.3%" trend="+2.1%" />
-          <StatsCard icon={History} label="Total Scans" value="4,812" />
+          <StatsCard icon={ScanLine} label="Scans Today" value={stats.scansToday.toString()} />
+          <StatsCard icon={Bug} label="Diseases Found" value={stats.diseasesFound.toString()} />
+          <StatsCard icon={TrendingUp} label="Accuracy Rate" value={`${stats.accuracy}%`} />
+          <StatsCard icon={History} label="Total Scans" value={stats.totalScans.toString()} />
         </div>
       </section>
 

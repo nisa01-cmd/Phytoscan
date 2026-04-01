@@ -1,6 +1,5 @@
-import { AlertTriangle, CheckCircle2, Info, Leaf, Droplets, Sun, Bug } from "lucide-react";
+import { Info, Leaf, Droplets, Sun, Bug } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export interface PredictionData {
   disease: string;
@@ -10,21 +9,18 @@ export interface PredictionData {
   description: string;
   treatments: string[];
   prevention: string[];
+
+  top_predictions?: {
+    class: string;
+    confidence: number;
+  }[];
 }
 
 interface PredictionResultProps {
   result: PredictionData;
 }
 
-const severityConfig = {
-  low: { icon: CheckCircle2, label: "Low Severity", class: "disease-severity-low" },
-  medium: { icon: AlertTriangle, label: "Medium Severity", class: "disease-severity-medium" },
-  high: { icon: AlertTriangle, label: "High Severity", class: "disease-severity-high" },
-};
-
 const PredictionResult = ({ result }: PredictionResultProps) => {
-  const severity = severityConfig[result.severity];
-  const SeverityIcon = severity.icon;
 
   return (
     <div className="space-y-4 fade-in-up">
@@ -51,13 +47,6 @@ const PredictionResult = ({ result }: PredictionResultProps) => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Badge
-            variant="outline"
-            className={`${severity.class} gap-1.5 px-3 py-1 text-xs font-medium border`}
-          >
-            <SeverityIcon className="h-3.5 w-3.5" />
-            {severity.label}
-          </Badge>
 
           <p className="text-sm text-muted-foreground leading-relaxed">
             {result.description}
@@ -79,9 +68,35 @@ const PredictionResult = ({ result }: PredictionResultProps) => {
         </CardContent>
       </Card>
 
+      {/* 🔥 TOP 3 PREDICTIONS */}
+      {result.top_predictions && (
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              Top Predictions
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-2">
+            {result.top_predictions.map((p, i) => (
+              <div
+                key={i}
+                className="flex justify-between items-center p-2 rounded-md bg-muted hover:bg-muted/80 transition-all"
+              >
+                <span className="text-sm">{p.class}</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {(p.confidence * 100).toFixed(2)}%
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Treatments */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card className="shadow-sm stagger-1 fade-in-up">
+        <Card className="shadow-sm hover:shadow-md transition-all">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Droplets className="h-4 w-4 text-primary" />
@@ -100,7 +115,7 @@ const PredictionResult = ({ result }: PredictionResultProps) => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm stagger-2 fade-in-up">
+        <Card className="shadow-sm hover:shadow-md transition-all">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Leaf className="h-4 w-4 text-crop-healthy" />
